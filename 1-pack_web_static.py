@@ -6,6 +6,7 @@ from datetime import datetime
 
 
 def do_pack():
+    """Creat and return the archive path"""
     try:
         # Create the "version" directory if it doesn't exist
         local("mkdir -p versions")

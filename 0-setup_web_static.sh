@@ -19,7 +19,7 @@ echo "<html>
   </html>" | sudo tee /data/web_static/releases/test/index.html  > /dev/null
 
 # Create or recreate the symbolic link
-[ -d /data/web_static/current ] && rm -rf /data/web_static/current
+[ -d /data/web_static/current ] && sudo rm -rf /data/web_static/current
 sudo ln -sf /data/web_static/releases/test /data/web_static/curren
 
 # Give ownership of the /data/ folder
@@ -43,3 +43,5 @@ server {
 }
 "
 echo "$nginx_config" | sudo tee "$config_file" > /dev/null
+sudo service nginx restart
+exit 0

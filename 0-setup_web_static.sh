@@ -8,7 +8,7 @@ fi
 
 # Create necessary dicectories
 sudo mkdir -p /data/web_static/{releases/test,shared}
-sudo mkdir -p /data/web_static/current
+sudo chown -R ubuntu:ubuntu /data/
 
 # Create a fake HTML file
 echo "<html>
@@ -20,9 +20,7 @@ echo "<html>
   </html>" | sudo tee /data/web_static/releases/test/index.html  > /dev/null
 
 # Create or recreate the symbolic link
-if [ -L /data/web_static/current ]; then
-        rm /data/web_static/current
-fi
+[ -d /data/web_static/current ] && rm -rf /data/web_static/current
 sudo ln -sf /data/web_static/releases/test /data/web_static/curren
 
 # Give ownership of the /data/ folder

@@ -11,11 +11,13 @@ app = Flask(__name__)
 
 @app.teardown_appcontext
 def teardown_db(exception):
+    """Close the database"""
     storage.close()
 
 
 @app.route('/states_list')
 def states_list():
+    """Return list of states"""
     states = storage.all(State).values()
     sorted_states = sorted(states, key=lamda state: state.name)
     print(sorted_states)

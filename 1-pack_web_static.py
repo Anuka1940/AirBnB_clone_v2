@@ -1,35 +1,36 @@
 #!/usr/bin/python3
 """
-distributes an archive to your web servers, using the function do_deploy
+Fabric script to distribute an archive to web servers using do_deploy function
 """
-
-from os.path import exists
 from fabric.api import *
-env.hosts = ['23.20.35.69', '35.227.91.66']
+from os.path import exists
+
+env.hosts = ['100.26.168.218', '35.175.134.173']  # Replace with your server IPs
+env.user = 'ubuntu'  # Replace with your SSH username
+env.key_filename = '~/.ssh/id_rsa'  # Replace with your SSH private key path
 
 
 def do_deploy(archive_path):
-    """Executing function to deploy"""
-    if exists(archive_path) is False:
+    """
+    Distributes an archive to web servers
+    """
+    if not exists(archive_path):
         return False
+
     try:
-        fileEndpoint = archive_path.split("/")[-1]
-        name = fileEndpoint.split(".")[0]
-        path = "/data/web_static/releases/"
-        put(archive_path, '/tmp/')
-        """ Creating dir """
-        run('mkdir -p {}{}/'.format(path, name))
-        """ Executign tar"""
-        run('tar -xzf /tmp/{} -C {}{}/'.format(fileEndpoint, path, name))
-        """ Deleting tmp file"""
-        run('rm /tmp/{}'.format(fileEndpoint))
-        """ Moving dir with all content"""
-        run('mv {0}{1}/web_static/* {0}{1}/'.format(path, name))
-        """ Deleting original"""
-        run('rm -rf {}{}/web_static'.format(path, name))
-        run('rm -rf /data/web_static/current')
-        """ Creating S. link"""
-        run('ln -s {}{}/ /data/web_static/current'.format(path, name))
+        put(archive_path, "/tmp/")
+        filename = archive_path.split("/")[-1].split(".")[0]
+        run("mkdir -p /data/web_static/releases/{}/".format(filename))
+        run("tar -xzf /tmp/{}.tgz -C /data/web_static/releases/{}/"
+            .format(filename, filename))
+        run("rm /tmp/{}.tgz".format(filename))
+        run("mv /data/web_static/releases/{}/web_static/* /data/web_static/releases/{}/"
+            .format(filename, filename))
+        run("rm -rf /data/web_static/releases/{}/web_static".format(filename))
+        run("rm -rf /data/web_static/current")
+        run("ln -s /data/web_static/releases/{}/ /data/web_static/current"
+            .format(filename))
         return True
-    except Exception:
+    except Exception as e:
         return False
+

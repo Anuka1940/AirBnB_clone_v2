@@ -1,24 +1,35 @@
 #!/usr/bin/python3
-""" A fabric scrip that generates a .tgz archive
-from the contents of the web_static folder using the do_pack function"""
-from fabric.api import local
-from datetime import datetime
+"""
+distributes an archive to your web servers, using the function do_deploy
+"""
+
+from os.path import exists
+from fabric.api import *
+env.hosts = ['23.20.35.69', '35.227.91.66']
 
 
-def do_pack():
-    """Creat and return the archive path"""
+def do_deploy(archive_path):
+    """Executing function to deploy"""
+    if exists(archive_path) is False:
+        return False
     try:
-        # Create the "version" directory if it doesn't exist
-        local("mkdir -p versions")
-
-        # Generate the archive name based on the current date and time
-        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        archive_name = f"web_static_{timestamp}.tgz"
-
-        # Compress the contents of the "web_static" folder into the archive
-        local(f"tar -czvf versions/{archive_name} web_static")
-
-        # Return the path to the created archive
-        return f"versions/{archive_name}"
+        fileEndpoint = archive_path.split("/")[-1]
+        name = fileEndpoint.split(".")[0]
+        path = "/data/web_static/releases/"
+        put(archive_path, '/tmp/')
+        """ Creating dir """
+        run('mkdir -p {}{}/'.format(path, name))
+        """ Executign tar"""
+        run('tar -xzf /tmp/{} -C {}{}/'.format(fileEndpoint, path, name))
+        """ Deleting tmp file"""
+        run('rm /tmp/{}'.format(fileEndpoint))
+        """ Moving dir with all content"""
+        run('mv {0}{1}/web_static/* {0}{1}/'.format(path, name))
+        """ Deleting original"""
+        run('rm -rf {}{}/web_static'.format(path, name))
+        run('rm -rf /data/web_static/current')
+        """ Creating S. link"""
+        run('ln -s {}{}/ /data/web_static/current'.format(path, name))
+        return True
     except Exception:
-        return None
+        return False

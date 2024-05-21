@@ -1,61 +1,60 @@
 #!/usr/bin/python3
 """
-Fabric script that creates and distributes an archive to me web servers,
-using the function deploy"""
+Script to implement deploy to a web server
+"""
 
+from os.path import exists
 from fabric.api import *
+import os.path
 from datetime import datetime
-import os
+from fabric.api import local
 
-
-env.hosts = ['54.160.93.171', '54.159.27.183']
-
-
-def do_pack():
-    """Define the do_pack function"""
-    try:
-        local("mkdir -p versions")
-        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        archive_name = f"web_static_{timestamp}.tgz"
-        local(f"tar -czvf versions/{archive_name} web_static")
-        return f"versions/{archive_name}"
-    except Exception:
-        return None
-
-
-def do_deploy(archive_path):
-    """Define the do_deploy function"""
-    if not os.path.exists(archive_path):
-        return False
-    try:
-        put(archive_path, "/tmp/")
-        archive_name = os.path.basename(archive_name)
-        archive_name_no_ext = os.path.splitext(archive_name)[0]
-        releases_path = "/data/web_static/releases/"
-
-        run("mkdir -p {}{}".format(releases_path, archive_name))
-        run("tar -xzf /tmp/{} -C {}{}".format(
-                                              archive_name,
-                                              releases_path,
-                                              archive_name_no_ext))
-        run("rm /tmp/{}".format(archive_name))
-        current_path = "/data/web_static/current"
-        if exists(current_path):
-            run("rm {}".format(current))
-
-        run("ln -s {}{} {}".format(
-                                   releases_path,
-                                   archive_name_no_ext,
-                                   current_path))
-        return True
-    except Exception:
-        return False
+env.hosts = ['100.26.168.218', '35.175.134.173']
 
 
 def deploy():
-    """Define deploy function"""
-    archive_path = do_pack()
-    if not archive_path:
-        return False
+    "Implements creation of tar file and deploy the project"
+    path = do_pack()
+    if path:
+        do_deploy(path)
+    return None
 
-    return do_deploy(archive_path)
+
+def do_pack():
+    """Create the tar gzipped archive."""
+    current_date = datetime.now().strftime("%Y%m%d%H%M%S")
+    created_file = "versions/web_static_{}.tgz".format(current_date)
+
+    if os.path.isdir("versions") is False:
+        if local("mkdir -p versions").failed is True:
+            return None
+    if local("tar -cvzf {} web_static".format(created_file)).failed is True:
+        return None
+    return created_file
+
+
+def do_deploy(archive_path):
+    """Executing function to deploy"""
+    if exists(archive_path) is False:
+        return False
+    try:
+        fileEndpoint = archive_path.split("/")[-1]
+        name = fileEndpoint.split(".")[0]
+        path = "/data/web_static/releases/"
+        put(archive_path, '/tmp/')
+        """ Creating dir """
+        run('mkdir -p {}{}/'.format(path, name))
+        """ Executign tar"""
+        run('tar -xzf /tmp/{} -C {}{}/'.format(fileEndpoint, path, name))
+        """ Deleting tmp file"""
+        run('rm /tmp/{}'.format(fileEndpoint))
+        """ Moving dir with all content"""
+        run('mv {0}{1}/web_static/* {0}{1}/'.format(path, name))
+        """ Deleting original"""
+        run('rm -rf {}{}/web_static'.format(path, name))
+        run('rm -rf /data/web_static/current')
+        """ Creating S. link"""
+        run('ln -s {}{}/ /data/web_static/current'.format(path, name))
+        return True
+    except Exception:
+        return False

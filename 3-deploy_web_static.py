@@ -10,6 +10,8 @@ from datetime import datetime
 from fabric.api import local
 
 env.hosts = ['100.26.168.218', '35.175.134.173']
+env.user = 'ubuntu'
+env.key_filename = '~/.ssh/school'
 
 
 def deploy():

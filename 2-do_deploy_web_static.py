@@ -6,6 +6,8 @@ distributes an archive to your web servers, using the function do_deploy
 from os.path import exists
 from fabric.api import *
 env.hosts = ['100.26.168.218', '35.175.134.173']
+env.user = 'ubuntu'
+env.key_filename = '~/.ssh/school'
 
 
 def do_deploy(archive_path):

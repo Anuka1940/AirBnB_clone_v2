@@ -1,43 +1,35 @@
 #!/usr/bin/python3
-""" Fabric script that distributes an archive to your web servers,
-using the function do_deploy"""
-from fabric.api import *
-import os
+"""
+distributes an archive to your web servers, using the function do_deploy
+"""
 
-# Define the remote servers
+from os.path import exists
+from fabric.api import *
 env.hosts = ['100.26.168.218', '35.175.134.173']
 
 
 def do_deploy(archive_path):
-    """Define function"""
-    if not os.path.exists(archive_path):
+    """Executing function to deploy"""
+    if exists(archive_path) is False:
         return False
-
     try:
-        put(archive_patch, "/tmp/")
-        archive_name = os.path.basename(archive_path)
-        archive_name_no_ext = os.path.splitext(archive_name)[0]
-        releases_path = "/data/web_static/releases/"
-
-        run("mkdir -p {}{}".format(
-                                   release_path,
-                                   archive_name_no_ext))
-        run("tar -xzf /tmp/{} -C {}{}".format(
-                                              archive_name,
-                                              releases_path,
-                                              archive_name_no_ext))
-        # Delete the archive from the /tmp/
-        run("rm {}".format(archive_name))
-        # Delete the symbolic link /data/web_static/current
-        current_path = "/data/web_static/current"
-        if exists(current_path):
-            run("rm {}".format(current_path))
-
-        # Create a new symbolic link
-        run("ln -s {}{} {}".format(
-                                   releases_path,
-                                   archive_name_no_ext,
-                                   current_path))
+        fileEndpoint = archive_path.split("/")[-1]
+        name = fileEndpoint.split(".")[0]
+        path = "/data/web_static/releases/"
+        put(archive_path, '/tmp/')
+        """ Creating dir """
+        run('mkdir -p {}{}/'.format(path, name))
+        """ Executign tar"""
+        run('tar -xzf /tmp/{} -C {}{}/'.format(fileEndpoint, path, name))
+        """ Deleting tmp file"""
+        run('rm /tmp/{}'.format(fileEndpoint))
+        """ Moving dir with all content"""
+        run('mv {0}{1}/web_static/* {0}{1}/'.format(path, name))
+        """ Deleting original"""
+        run('rm -rf {}{}/web_static'.format(path, name))
+        run('rm -rf /data/web_static/current')
+        """ Creating S. link"""
+        run('ln -s {}{}/ /data/web_static/current'.format(path, name))
         return True
     except Exception:
         return False

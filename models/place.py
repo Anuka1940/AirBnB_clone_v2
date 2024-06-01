@@ -6,24 +6,25 @@ import os
 from sqlalchemy.orm import relationship
 
 
-place_amenity = Table(
-        'place_amenity',
-        Base.metadata,
-        Column(
-            'place_id',
-            String(60),
-            ForeignKey('places.id'),
-            nullable=False,
-            primary_key=True
-            ),
-        Column(
-            'amenity_id',
-            String(60),
-            ForeignKey('amenities.id'),
-            nullable=False,
-            primary_key=True
+if os.getenv('HBNB_TYPE_STORAGE') == 'db':
+    place_amenity = Table(
+            'place_amenity',
+            Base.metadata,
+            Column(
+                'place_id',
+                String(60),
+                ForeignKey('places.id'),
+                nullable=False,
+                primary_key=True
+                ),
+            Column(
+                'amenity_id',
+                String(60),
+                ForeignKey('amenities.id'),
+                nullable=False,
+                primary_key=True
+                )
             )
-        )
 
 class Place(BaseModel, Base):
     """ A place to stay """
@@ -31,7 +32,7 @@ class Place(BaseModel, Base):
     if os.getenv('HBNB_TYPE_STORAGE') == 'db':
         city_id = Column(String(60), ForeignKey('cities.id'), nullable=False)
         user_id = Column(String(60), ForeignKey('users.id'), nullable=False)
-        name = Column(String(60), nullable=False)
+        name = Column(String(128), nullable=False)
         description = Column(String(1024), nullable=True)
         number_rooms = Column(Integer, default=0, nullable=False)
         number_bathrooms = Column(Integer, default=0, nullable=False)
@@ -63,29 +64,29 @@ class Place(BaseModel, Base):
         longitude = 0.0
         amenity_ids = []
     
-    @property
-    def reviews(self):
-        """Return the review of this place"""
-        from models import storage
-        place_review = []
-        for key, value in storage.all(Review).items():
-            if value.place_id == self.id:
-                place_review.append(value)
-        return place_review
+        @property
+        def reviews(self):
+            """Return the review of this place"""
+            from models import storage
+            place_review = []
+            for key, value in storage.all(Review).items():
+                if value.place_id == self.id:
+                    place_review.append(value)
+            return place_review
 
-    @property
-    def amenities(self):
-        """Return the amenities of this Place"""
-        from models import storage
-        place_amenity = []
-        for key, value in storage.all(Amenity).items():
-            if value.place_id in self.amenity_ids:
-                place_amenity.append(value)
-        return place_amenity
+        @property
+        def amenities(self):
+            """Return the amenities of this Place"""
+            from models import storage
+            place_amenity = []
+            for key, value in storage.all(Amenity).items():
+                if value.place_id in self.amenity_ids:
+                    place_amenity.append(value)
+            return place_amenity
 
-    @amenities.setter
-    def amenities(self, value):
-        """ Adds amenity id to list of amenity ids"""
-        if type(value) is Amenity:
-            if value.id not in self.amenity_ids:
-                self.amenity_ids.append(value)
+        @amenities.setter
+        def amenities(self, value):
+            """ Adds amenity id to list of amenity ids"""
+            if type(value) is Amenity:
+                if value.id not in self.amenity_ids:
+                    self.amenity_ids.append(value)

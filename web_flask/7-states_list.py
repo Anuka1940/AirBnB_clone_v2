@@ -19,7 +19,7 @@ def teardown_db(exception):
 def states_list():
     """Return list of states"""
     states = storage.all(State).values()
-    sorted_states = sorted(states, key=lamda state: state.name)
+    sorted_states = sorted(states, key=lambda state: state.name)
     print(sorted_states)
     return render_template('states_list.html', states=sorted_states)
 

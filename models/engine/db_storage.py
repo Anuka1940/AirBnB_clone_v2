@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 """
     This module defines a class that is mapped to a mysql database
 """

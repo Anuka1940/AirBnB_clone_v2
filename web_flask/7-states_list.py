@@ -1,28 +1,28 @@
 #!/usr/bin/python3
-"""A sript that start a Flask web application with some requirements"""
+import sys
+sys.path.append("..")
 from flask import Flask, render_template
 from models import storage
 from models.state import State
-from operator import itemgetter
-
 
 app = Flask(__name__)
 
+@app.route("/states_list")
+def state():
+    all_states = storage.all(State)
+    all_states = list(all_states.values())
+    print(all_states)
+    all_states.sort(key=lambda state: state.name)
+    print(all_states)
+    return render_template("7-states_list.html", all_states=all_states)
+
 
 @app.teardown_appcontext
-def teardown_db(exception):
-    """Close the database"""
+def tear_down(context):
     storage.close()
 
 
-@app.route('/states_list')
-def states_list():
-    """Return list of states"""
-    states = storage.all(State).values()
-    sorted_states = sorted(states, key=lambda state: state.name)
-    print(sorted_states)
-    return render_template('states_list.html', states=sorted_states)
+if __name__ == "__main__":
+    app.run(debug=True)
 
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
